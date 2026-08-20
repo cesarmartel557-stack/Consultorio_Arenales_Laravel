@@ -1,0 +1,17 @@
+# MAMP sirve htdocs/ directamente, por lo que la raíz del proyecto queda expuesta.
+# La solución correcta es apuntar el DocumentRoot / VirtualHost a la carpeta public/.
+# Mientras tanto, esto redirige el tráfico a public/ y bloquea los archivos sensibles.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule ^(\.env|\.env\..*|composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml)$ - [F,L]
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|tests|vendor)/ - [F,L]
+
+    RewriteCond %{REQUEST_URI} !^/consultorio/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
