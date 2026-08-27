@@ -27,20 +27,33 @@
               <div class="doc-card">
                 <div class="row g-4 align-items-center">
                   <div class="col-auto">
-                    <img class="doc-photo" src="{{ $doctor->photo ? asset($doctor->photo) : asset('assets/images/logo_300.png') }}" alt="{{ $doctor->full_name }}" />
+                    <img class="doc-photo" src="{{ $doctor->photo ? Storage::url($doctor->photo) : asset('assets/images/logo_300.png') }}" alt="{{ $doctor->full_name }}" />
                   </div>
                   <div class="col">
                     <h3>{{ $doctor->full_name }}</h3>
                     @if ($doctor->license)
                       <div class="doc-mn">{{ $doctor->license }}</div>
                     @endif
-                    <p class="doc-role">{{ $doctor->headline }}</p>
+                    <p class="doc-role">{{ $doctor->headline ?: $doctor->specialties->pluck('name')->join(' · ') }}</p>
 
-                    @if ($doctor->healthInsurances->isNotEmpty())
+                    @if ($doctor->bio)
+                      <div class="doc-bio mb-3">{!! nl2br(e($doctor->bio)) !!}</div>
+                    @endif
+
+                    @php
+                      $displayInsurances = $doctor->healthInsurances->filter(function ($insurance) {
+                          return strtolower(trim($insurance->name)) !== 'particular';
+                      });
+                    @endphp
+                    @if ($displayInsurances->isNotEmpty())
                       <div class="d-flex flex-wrap gap-2 doc-os mb-3">
                         <span class="doc-os-label me-1">Obras Sociales</span>
-                        @foreach ($doctor->healthInsurances->whereNotNull('logo') as $insurance)
-                          <span class="obra-soc"><img src="{{ asset($insurance->logo) }}" alt="{{ $insurance->name }}" /></span>
+                        @foreach ($displayInsurances as $insurance)
+                          @if($insurance->logo)
+                            <span class="obra-soc"><img src="{{ Storage::url($insurance->logo) }}" alt="{{ $insurance->name }}" /></span>
+                          @else
+                            <span class="obra-soc">{{ $insurance->name }}</span>
+                          @endif
                         @endforeach
                       </div>
                     @endif

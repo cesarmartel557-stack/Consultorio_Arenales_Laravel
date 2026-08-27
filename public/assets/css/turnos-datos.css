@@ -204,6 +204,7 @@ body {
 .booking-card h2 { color: var(--brand); font-weight: 700; font-size: 1.5rem; margin-bottom: .15rem; }
 .doc-mn { font-size: .68rem; color: var(--muted); letter-spacing: .04em; }
 .doc-role { font-size: .9rem; color: #33454d; margin: .35rem 0 .9rem; }
+.doc-bio { font-size: .88rem; color: #556871; line-height: 1.5; white-space: pre-line; margin-bottom: .9rem; }
 .doc-os-label { font-size: .68rem; font-weight: 700; color: #4a5c64; }
 .doc-os span {
 	font-size: .76rem; font-weight: 600; color: var(--brand);
@@ -214,12 +215,17 @@ body {
 	font-weight: 600; 
 	color: var(--brand);
 	background: transparent; padding: 0;
-	max-width: 82px;
+	width: 65px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	margin: 0 6px;
 }
 .doc-os span.obra-soc>img {
-   max-width: 100%;
+   width: 100%;
    height: auto;
+   max-height: 28px;
+   object-fit: contain;
 }
 
 .doc-hours .chip {
@@ -275,12 +281,12 @@ body {
 /* --- Inputs vistosos --- */
 .field { position: relative; margin-bottom: 1.15rem; }
 .field .form-control, .field .form-select {
-	height: 58px; border: 1px solid #e0e9ec; border-radius: 14px;
-	background: #fbfdfe; padding: 1.55rem .95rem .5rem 2.85rem;
-	font-size: .95rem; color: #33454d; box-shadow: none;
+	height: 60px; border: 1px solid #e0e9ec; border-radius: 14px;
+	background: #fbfdfe; padding: 1.45rem .95rem .35rem 2.85rem;
+	font-size: .92rem; color: #33454d; box-shadow: none;
 	transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
-.field .form-select { padding-top: 1.5rem; }
+.field .form-select { padding-top: 1.35rem; padding-bottom: .25rem; cursor: pointer; }
 .field .form-control::placeholder { color: transparent; }
 .field .form-control:focus, .field .form-select:focus {
 	background: #fff; border-color: var(--brand);
@@ -293,19 +299,36 @@ body {
 }
 .field .form-control:focus + label,
 .field .form-control:not(:placeholder-shown) + label,
-.field .form-select:focus + label,
-.field .form-select.has-value + label {
-	top: .95rem; transform: none; font-size: .66rem; font-weight: 700;
+.field .form-select + label {
+	top: .48rem; transform: none; font-size: .63rem; font-weight: 700;
 	letter-spacing: .06em; text-transform: uppercase; color: var(--brand);
+}
+.field .form-control.is-invalid + label,
+.field .form-select.is-invalid + label {
+	color: #c0453f;
 }
 .field .fi {
 	position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
 	color: #9db3bb; font-size: 1rem; transition: color .2s ease;
 }
 .field:focus-within .fi { color: var(--brand); }
-.field .form-control:not(:placeholder-shown) ~ .fi { color: var(--brand); }
+.field .form-control:not(:placeholder-shown) ~ .fi,
+.field .form-select:has(option:checked:not([value=""])) ~ .fi,
+.field .form-select.has-value ~ .fi {
+	color: var(--brand);
+}
+.field .form-control.is-invalid ~ .fi,
+.field .form-select.is-invalid ~ .fi {
+	color: #c0453f;
+}
 .field .invalid-msg { display: none; font-size: .72rem; color: #c0453f; margin: .35rem 0 0 .3rem; }
-.field.is-invalid .form-control, .field.is-invalid .form-select { border-color: #e0a5a2; background: #fff8f8; }
+.field.is-invalid .form-control,
+.field.is-invalid .form-select,
+.field .form-control.is-invalid,
+.field .form-select.is-invalid {
+	border-color: #e0a5a2;
+	background: #fff8f8;
+}
 .field.is-invalid .invalid-msg { display: block; }
 
 .form-hint { font-size: .74rem; color: var(--muted); }

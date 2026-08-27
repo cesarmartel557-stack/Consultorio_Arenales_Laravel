@@ -6,11 +6,13 @@ use App\Enums\UserRole;
 use App\Filament\Resources\DoctorResource\Pages;
 use App\Models\Doctor;
 use App\Models\DoctorSchedule;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -31,6 +33,11 @@ class DoctorResource extends Resource
     public static function canAccess(): bool
     {
         return auth()->user()->isAdmin();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['specialties']);
     }
 
     public static function form(Form $form): Form
@@ -59,8 +66,15 @@ class DoctorResource extends Resource
                         ->placeholder('MN 12345 | MP 67890')
                         ->maxLength(120),
                     Forms\Components\TextInput::make('headline')
-                        ->label('Especialidad (texto que se muestra)')
+                        ->label('Título / Especialidad breve')
                         ->maxLength(180)
+                        ->columnSpanFull(),
+                    Forms\Components\Textarea::make('bio')
+                        ->label('Biografía o Presentación')
+                        ->placeholder('Contale a los pacientes un poco sobre tu experiencia o indicaciones importantes...')
+                        ->rows(4)
+                        ->maxLength(1000)
+                        ->helperText('Se respetan los saltos de línea y espacios al mostrarse en la web.')
                         ->columnSpanFull(),
                     Forms\Components\FileUpload::make('photo')
                         ->label('Foto')
@@ -104,10 +118,14 @@ class DoctorResource extends Resource
                                 ->required(),
                             Forms\Components\TimePicker::make('start_time')
                                 ->label('Desde')
+                                ->native(false)
+                                ->displayFormat('H:i')
                                 ->seconds(false)
                                 ->required(),
                             Forms\Components\TimePicker::make('end_time')
                                 ->label('Hasta')
+                                ->native(false)
+                                ->displayFormat('H:i')
                                 ->seconds(false)
                                 ->required()
                                 ->after('start_time'),
@@ -133,10 +151,14 @@ class DoctorResource extends Resource
                                 ->required(),
                             Forms\Components\TimePicker::make('start_time')
                                 ->label('Desde')
+                                ->native(false)
+                                ->displayFormat('H:i')
                                 ->seconds(false)
                                 ->helperText('Vacío = todo el día'),
                             Forms\Components\TimePicker::make('end_time')
                                 ->label('Hasta')
+                                ->native(false)
+                                ->displayFormat('H:i')
                                 ->seconds(false),
                             Forms\Components\TextInput::make('reason')
                                 ->label('Motivo')
@@ -161,12 +183,18 @@ class DoctorResource extends Resource
                         ->default(2)
                         ->minValue(0)
                         ->required(),
-                    Forms\Components\TextInput::make('max_days_ahead')
-                        ->label('Reservar hasta (días)')
-                        ->numeric()
+                    Forms\Components\Select::make('max_days_ahead')
+                        ->label('Ventana de reserva a futuro')
+                        ->options([
+                            30 => '1 mes (30 días)',
+                            60 => '2 meses (60 días)',
+                            90 => '3 meses (90 días)',
+                            180 => '6 meses (180 días)',
+                            365 => '1 año (365 días)',
+                        ])
                         ->default(60)
-                        ->minValue(1)
-                        ->required(),
+                        ->required()
+                        ->helperText('Período máximo a futuro en el que los pacientes pueden agendar turnos.'),
                 ]),
 
             Forms\Components\Section::make('Acceso al panel')
@@ -189,7 +217,7 @@ class DoctorResource extends Resource
                                 ->minLength(8)
                                 ->dehydrateStateUsing(fn (string $state) => Hash::make($state)),
                         ])
-                        ->createOptionUsing(fn (array $data) => \App\Models\User::create([
+                        ->createOptionUsing(fn (array $data) => User::create([
                             ...$data,
                             'role' => UserRole::Doctor,
                         ])->id),

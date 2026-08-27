@@ -19,7 +19,13 @@ class AppointmentWorkflow
             'confirmed_at' => now(),
         ]);
 
-        Mail::to($appointment->email)->send(new AppointmentConfirmed($appointment));
+        dispatch(function () use ($appointment) {
+            try {
+                Mail::to($appointment->email)->send(new AppointmentConfirmed($appointment));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        })->afterResponse();
 
         $this->notify('Turno confirmado', "Se le envió el mail de confirmación a {$appointment->email}.");
     }
@@ -31,7 +37,13 @@ class AppointmentWorkflow
             'status_reason' => $reason,
         ]);
 
-        Mail::to($appointment->email)->send(new AppointmentRejected($appointment));
+        dispatch(function () use ($appointment) {
+            try {
+                Mail::to($appointment->email)->send(new AppointmentRejected($appointment));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        })->afterResponse();
 
         $this->notify('Turno rechazado', 'El horario quedó liberado y se avisó al paciente.');
     }
@@ -45,7 +57,13 @@ class AppointmentWorkflow
             'cancelled_at' => now(),
         ]);
 
-        Mail::to($appointment->email)->send(new AppointmentCancelledByClinic($appointment));
+        dispatch(function () use ($appointment) {
+            try {
+                Mail::to($appointment->email)->send(new AppointmentCancelledByClinic($appointment));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        })->afterResponse();
 
         $this->notify('Turno cancelado', 'El horario quedó liberado y se avisó al paciente.');
     }

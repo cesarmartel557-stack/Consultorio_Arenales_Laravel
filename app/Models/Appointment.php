@@ -28,6 +28,7 @@ class Appointment extends Model
         'last_name',
         'email',
         'phone',
+        'dni',
         'notes',
         'confirmed_at',
         'cancelled_at',

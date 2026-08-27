@@ -253,6 +253,7 @@ body {
 .doc-card h3 { color: var(--brand); font-weight: 700; font-size: 1.4rem; margin-bottom: .65rem; min-height: 53px; }
 .doc-mn { font-size: .68rem; color: var(--muted); letter-spacing: .04em; }
 .doc-role { font-size: .85rem; color: var(--muted); margin: .4rem 0 1rem; min-height: 42px; }
+.doc-bio { font-size: .85rem; color: #556871; line-height: 1.5; white-space: pre-line; margin-bottom: 1rem; }
 .doc-item .doc-os-label { font-size: .68rem; font-weight: 700; color: #4a5c64; padding-left: 0 !important;}
 .doc-item .doc-os span {
 	font-size: .74rem; font-weight: 600; color: var(--brand);
@@ -264,12 +265,16 @@ body {
 	color: var(--brand);
 	background: transparent; padding: 0;
 	width: 58px;
-	display: block;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	margin: 0 4px 0 0;
 }
 .doc-item .doc-os span.obra-soc>img {
-   max-width: 100%;
+   width: 100%;
    height: auto;
+   max-height: 26px;
+   object-fit: contain;
 }
 .doc-hours .chip {
 	border: 1px solid #dfe7ea; border-radius: 4px;

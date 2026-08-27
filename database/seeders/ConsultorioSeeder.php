@@ -144,6 +144,8 @@ class ConsultorioSeeder extends Seeder
                     'headline' => $data['headline'],
                     'photo' => $data['photo'],
                     'slot_minutes' => 15,
+                    'min_hours_notice' => 2,
+                    'max_days_ahead' => 60,
                     'sort_order' => $index,
                     'is_active' => true,
                 ],

@@ -32,6 +32,6 @@ class ScheduleException extends Model
 
     public function isFullDay(): bool
     {
-        return $this->start_time === null && $this->end_time === null;
+        return empty($this->start_time) && empty($this->end_time);
     }
 }

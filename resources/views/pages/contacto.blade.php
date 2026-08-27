@@ -33,7 +33,7 @@
             </div>
             <div class="contact-item">
               <span class="ci-icon"><i class="bi bi-envelope-fill"></i></span>
-              <a href="mailto:consultas@consultoriointegralarenales.com.ar">consultas@consultoriointegralarenales.com.ar</a>
+              <a href="mailto:info@consultoriointegralarenales.com.ar">info@consultoriointegralarenales.com.ar</a>
             </div>
             <div class="contact-item">
               <span class="ci-icon"><i class="bi bi-geo-alt-fill"></i></span>
@@ -59,7 +59,7 @@
       <div class="container">
         <div class="cta-band p-4 p-md-4">
           <div class="row align-items-center g-3">
-            <div class="col-auto"><div class="agenda-icon"><img class="" src="/assets/images/agenda-icon.webp" alt="" /></div></div>
+            <div class="col-auto"><div class="agenda-icon"><img class="" src="{{ asset('assets/images/agenda-icon.webp') }}" alt="" /></div></div>
             <div class="col">
               <h3 class="mb-1">Agenda tu turno de forma rápida y sencilla.</h3>
               <p>Elegí el profesional, la fecha y el horario que mejor se adapten a vos.</p>

@@ -4,11 +4,11 @@ namespace App\Livewire;
 
 use App\Exceptions\SlotUnavailableException;
 use App\Mail\AppointmentRequested;
-use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Services\AvailabilityService;
 use App\Services\BookingService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
@@ -35,7 +35,9 @@ class BookingWizard extends Component
 
     public string $phone = '';
 
-    public ?string $health_insurance_id = null;
+    public string $dni = '';
+
+    public string $health_insurance_id = '';
 
     public ?string $specialty_id = null;
 
@@ -46,9 +48,17 @@ class BookingWizard extends Component
 
     public function mount(Doctor $doctor): void
     {
-        $this->doctor = $doctor->load(['specialties', 'healthInsurances', 'schedules']);
+        $this->doctor = $doctor->relationLoaded('schedules') && $doctor->relationLoaded('specialties') && $doctor->relationLoaded('healthInsurances')
+            ? $doctor
+            : $doctor->loadMissing(['specialties', 'healthInsurances', 'schedules']);
+
         $this->specialty_id = (string) $this->doctor->specialties->first()?->id;
         $this->selectFirstAvailableDay();
+    }
+
+    public function hydrate(): void
+    {
+        $this->doctor->loadMissing(['specialties', 'healthInsurances', 'schedules']);
     }
 
     protected function rules(): array
@@ -58,7 +68,8 @@ class BookingWizard extends Component
             'last_name' => ['required', 'string', 'min:2', 'max:60'],
             'email' => ['required', 'email:rfc', 'max:120'],
             'phone' => ['required', 'string', 'min:6', 'max:20'],
-            'health_insurance_id' => ['required', Rule::exists('health_insurances', 'id')],
+            'dni' => ['required', 'string', 'regex:/^\d{8}$/'],
+            'health_insurance_id' => ['required', Rule::in(array_merge(['particular'], $this->doctor->healthInsurances->pluck('id')->map(fn ($id) => (string) $id)->all()))],
             'specialty_id' => ['nullable', Rule::exists('specialties', 'id')],
             'notes' => ['nullable', 'string', 'max:500'],
         ];
@@ -72,21 +83,43 @@ class BookingWizard extends Component
             'email.required' => 'Ingresá un mail válido',
             'email.email' => 'Ingresá un mail válido',
             'phone.required' => 'Ingresá un teléfono válido',
+            'dni.required' => 'Ingresá tu DNI',
+            'dni.regex' => 'El DNI debe tener exactamente 8 dígitos, sin puntos ni guiones',
             'health_insurance_id.required' => 'Elegí una opción',
+            'health_insurance_id.in' => 'Elegí una opción válida',
         ];
     }
 
+    public function weekLabel(): string
+    {
+        $start = $this->weekStart();
+        $end = $start->copy()->addDays(5);
+        $meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+        if ($start->month === $end->month) {
+            return $start->day.' al '.$end->day.' de '.$meses[$end->month - 1].' '.$end->year;
+        }
+
+        return $start->day.' de '.$meses[$start->month - 1].' al '.$end->day.' de '.$meses[$end->month - 1].' '.$end->year;
+    }
+
     #[Computed]
-    public function week(): \Illuminate\Support\Collection
+    public function week(): Collection
     {
         return app(AvailabilityService::class)->week($this->doctor, $this->weekStart());
     }
 
     #[Computed]
-    public function slots(): \Illuminate\Support\Collection
+    public function slots(): Collection
     {
         if (! $this->selectedDate) {
             return collect();
+        }
+
+        $day = $this->week->firstWhere('date_string', $this->selectedDate);
+
+        if ($day && isset($day['slots'])) {
+            return collect($day['slots']);
         }
 
         return app(AvailabilityService::class)
@@ -104,9 +137,11 @@ class BookingWizard extends Component
 
     public function nextWeek(): void
     {
-        $this->weekOffset++;
-        $this->resetSelection();
-        $this->selectFirstAvailableDay();
+        if ($this->weekOffset < 8) {
+            $this->weekOffset++;
+            $this->resetSelection();
+            $this->selectFirstAvailableDay();
+        }
     }
 
     public function selectDate(string $date): void
@@ -150,7 +185,7 @@ class BookingWizard extends Component
             return null;
         }
 
-        $existing = $booking->existingRequestFor($this->doctor, $this->email);
+        $existing = $booking->existingRequestFor($this->doctor, $this->dni);
 
         if ($existing) {
             $this->addError('form', sprintf(
@@ -173,8 +208,9 @@ class BookingWizard extends Component
                     'last_name' => $this->last_name,
                     'email' => $this->email,
                     'phone' => $this->phone,
+                    'dni' => $this->dni,
                     'specialty_id' => $this->specialty_id ?: null,
-                    'health_insurance_id' => $this->health_insurance_id,
+                    'health_insurance_id' => $this->health_insurance_id === 'particular' ? null : $this->health_insurance_id,
                     'notes' => $this->notes ?: null,
                     'ip_address' => request()->ip(),
                 ],
@@ -189,7 +225,13 @@ class BookingWizard extends Component
 
         RateLimiter::hit($key, 900);
 
-        Mail::to($appointment->email)->send(new AppointmentRequested($appointment));
+        dispatch(function () use ($appointment) {
+            try {
+                Mail::to($appointment->email)->send(new AppointmentRequested($appointment));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        })->afterResponse();
 
         return $this->redirectRoute('turnos.gracias', ['appointment' => $appointment->uuid], navigate: true);
     }
@@ -215,9 +257,9 @@ class BookingWizard extends Component
 
     private function selectFirstAvailableDay(): void
     {
-        $day = $this->week()->firstWhere('available_count', '>', 0)
-            ?? $this->week()->firstWhere('has_schedule', true);
+        $day = $this->week->firstWhere('available_count', '>', 0)
+            ?? $this->week->firstWhere('has_schedule', true);
 
-        $this->selectedDate = $day ? $day['date']->toDateString() : null;
+        $this->selectedDate = $day ? $day['date_string'] : null;
     }
 }

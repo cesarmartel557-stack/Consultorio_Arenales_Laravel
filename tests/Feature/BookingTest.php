@@ -12,9 +12,11 @@ use App\Models\HealthInsurance;
 use App\Models\Specialty;
 use App\Services\AvailabilityService;
 use App\Services\BookingService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -110,7 +112,7 @@ class BookingTest extends TestCase
     {
         $this->bookSlot('09:30');
 
-        $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
+        $this->expectException(UniqueConstraintViolationException::class);
 
         // Salteamos la validación del servicio para probar el candado de la base.
         Appointment::create([
@@ -139,6 +141,7 @@ class BookingTest extends TestCase
             ->set('last_name', 'Pérez')
             ->set('email', 'ana@test.com')
             ->set('phone', '1155667788')
+            ->set('dni', '12345678')
             ->set('health_insurance_id', (string) $this->insurance->id)
             ->call('submit')
             ->assertHasNoErrors();
@@ -146,9 +149,38 @@ class BookingTest extends TestCase
         $appointment = Appointment::first();
 
         $this->assertSame('ana@test.com', $appointment->email);
+        $this->assertSame('12345678', $appointment->dni);
+        $this->assertSame('10:00', substr($appointment->start_time, 0, 5));
+        $this->assertSame('10:30', substr($appointment->end_time, 0, 5));
+
+        Mail::assertSent(AppointmentRequested::class);
+    }
+
+    public function test_el_wizard_permite_reservar_como_particular(): void
+    {
+        Mail::fake();
+
+        Livewire::test(BookingWizard::class, ['doctor' => $this->doctor])
+            ->set('selectedDate', $this->nextMonday->toDateString())
+            ->call('selectTime', '10:00')
+            ->call('goToDetails')
+            ->assertSet('step', 2)
+            ->set('first_name', 'Cesar')
+            ->set('last_name', 'Martel')
+            ->set('email', 'cesar@test.com')
+            ->set('phone', '1155667788')
+            ->set('dni', '87654321')
+            ->set('health_insurance_id', 'particular')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $appointment = Appointment::first();
+
+        $this->assertNotNull($appointment);
+        $this->assertSame('Cesar', $appointment->first_name);
+        $this->assertSame('Martel', $appointment->last_name);
+        $this->assertNull($appointment->health_insurance_id);
         $this->assertSame(AppointmentStatus::Pending, $appointment->status);
-        $this->assertSame('10:00:00', $appointment->start_time);
-        $this->assertSame('10:30:00', $appointment->end_time);
 
         Mail::assertSent(AppointmentRequested::class);
     }
@@ -160,14 +192,15 @@ class BookingTest extends TestCase
             ->call('selectTime', '10:00')
             ->call('goToDetails')
             ->call('submit')
-            ->assertHasErrors(['first_name', 'last_name', 'email', 'phone', 'health_insurance_id']);
+            ->assertHasErrors(['first_name', 'last_name', 'email', 'phone', 'dni', 'health_insurance_id']);
 
         $this->assertSame(0, Appointment::count());
     }
 
-    public function test_detecta_una_solicitud_duplicada_del_mismo_email(): void
+    public function test_detecta_una_solicitud_duplicada_por_dni(): void
     {
-        $this->bookSlot('09:30', 'repetido@test.com');
+        // Mismo DNI, distinto email -> debe bloquear de todas formas
+        $this->bookSlot('09:30', 'original@test.com', '99887766');
 
         Livewire::test(BookingWizard::class, ['doctor' => $this->doctor])
             ->set('selectedDate', $this->nextMonday->toDateString())
@@ -175,8 +208,9 @@ class BookingTest extends TestCase
             ->call('goToDetails')
             ->set('first_name', 'Ana')
             ->set('last_name', 'Pérez')
-            ->set('email', 'repetido@test.com')
+            ->set('email', 'otro@test.com')
             ->set('phone', '1155667788')
+            ->set('dni', '99887766')
             ->set('health_insurance_id', (string) $this->insurance->id)
             ->call('submit')
             ->assertHasErrors('form');
@@ -201,7 +235,7 @@ class BookingTest extends TestCase
         Mail::fake();
         $appointment = $this->bookSlot('09:30');
 
-        $url = \Illuminate\Support\Facades\URL::signedRoute('turnos.cancelar', $appointment);
+        $url = URL::signedRoute('turnos.cancelar', $appointment);
 
         $this->post($url, ['reason' => 'No puedo asistir'])->assertRedirect();
 
@@ -216,13 +250,27 @@ class BookingTest extends TestCase
         $this->get(route('turnos.gestion', $appointment))->assertForbidden();
     }
 
-    private function bookSlot(string $time, string $email = 'paciente@test.com'): Appointment
+    public function test_el_wizard_muestra_el_titulo_y_respeta_saltos_de_linea_de_la_biografia(): void
+    {
+        $this->doctor->update([
+            'headline' => 'Especialista en Fertilidad y Reproducción',
+            'bio' => "Solo atención virtual.\nConsultas al 11 5132 9844",
+        ]);
+
+        Livewire::test(BookingWizard::class, ['doctor' => $this->doctor])
+            ->assertSee('Especialista en Fertilidad y Reproducción')
+            ->assertSeeHtml('Solo atención virtual.<br />')
+            ->assertSeeHtml('Consultas al 11 5132 9844');
+    }
+
+    private function bookSlot(string $time, string $email = 'paciente@test.com', string $dni = '12345678'): Appointment
     {
         return app(BookingService::class)->book($this->doctor, $this->nextMonday, $time, [
             'first_name' => 'Paciente',
             'last_name' => 'Test',
             'email' => $email,
             'phone' => '1122334455',
+            'dni' => $dni,
             'health_insurance_id' => $this->insurance->id,
         ]);
     }

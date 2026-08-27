@@ -46,13 +46,13 @@ class BookingService
     }
 
     /**
-     * Solicitud vigente del mismo paciente con el mismo profesional, para no duplicar.
+     * Solicitud vigente del mismo paciente (por DNI) con el mismo profesional, para no duplicar.
      */
-    public function existingRequestFor(Doctor $doctor, string $email): ?Appointment
+    public function existingRequestFor(Doctor $doctor, string $dni): ?Appointment
     {
         return Appointment::query()
             ->where('doctor_id', $doctor->id)
-            ->where('email', $email)
+            ->where('dni', $dni)
             ->blocking()
             ->upcoming()
             ->orderBy('date')

@@ -1,20 +1,22 @@
 <x-mail::message>
-# Recibimos tu solicitud, {{ $appointment->first_name }}
+# Recibimos tu solicitud de turno
 
-Registramos tu pedido de turno. **Todavía no está confirmado**: el consultorio lo revisa y te avisa por mail apenas quede confirmado.
+Hola **{{ $appointment->first_name }}**, registramos tu pedido de turno correctamente.
+
+Tené en cuenta que **todavía no está confirmado**: el equipo del consultorio lo revisará y te enviaremos una notificación ni bien quede confirmado.
 
 <x-mail::panel>
-**Profesional:** {{ $doctor->full_name }}
-**Cuándo:** {{ $when }}
+**Profesional:** {{ $doctor->full_name }}  
+**Cuándo:** {{ $when }}  
 **Dónde:** Azcuénaga 1222, 5to piso — Palermo, CABA
 </x-mail::panel>
 
 <x-mail::button :url="$manageUrl">
-Ver o cancelar mi turno
+Ver o gestionar mi turno
 </x-mail::button>
 
-Si no podés asistir, cancelá desde ese botón así liberamos el horario para otra persona.
+Si no vas a poder asistir, por favor cancelalo con anticipación desde el botón para liberar el horario para otra persona.
 
-Gracias,<br>
-{{ config('app.name') }}
+Saludos cordiales,<br>
+**Consultorio Integral Arenales**
 </x-mail::message>

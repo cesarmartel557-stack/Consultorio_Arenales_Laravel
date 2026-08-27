@@ -2,9 +2,9 @@
 
 namespace App\Mail;
 
-use Illuminate\Mail\Mailables\Envelope;
 use App\Services\CalendarInvite;
 use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Envelope;
 
 class AppointmentReminder extends AppointmentMail
 {

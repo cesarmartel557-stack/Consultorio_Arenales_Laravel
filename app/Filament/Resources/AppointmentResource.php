@@ -30,7 +30,7 @@ class AppointmentResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with(['doctor', 'specialty', 'healthInsurance']);
 
         // El médico sólo ve su propia agenda.
         $doctor = auth()->user()?->doctor;
@@ -44,10 +44,24 @@ class AppointmentResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $pending = static::getEloquentQuery()
+        $user = auth()->user();
+        if (! $user) {
+            return null;
+        }
+
+        $query = Appointment::query()
             ->where('status', AppointmentStatus::Pending)
-            ->whereDate('date', '>=', today())
-            ->count();
+            ->where('date', '>=', today()->toDateString());
+
+        if (! $user->isAdmin()) {
+            $doctorId = $user->doctor?->id;
+            if (! $doctorId) {
+                return null;
+            }
+            $query->where('doctor_id', $doctorId);
+        }
+
+        $pending = $query->count();
 
         return $pending > 0 ? (string) $pending : null;
     }
@@ -82,10 +96,14 @@ class AppointmentResource extends Resource
                     Forms\Components\TimePicker::make('start_time')
                         ->label('Hora de inicio')
                         ->required()
+                        ->native(false)
+                        ->displayFormat('H:i')
                         ->seconds(false),
                     Forms\Components\TimePicker::make('end_time')
                         ->label('Hora de fin')
                         ->required()
+                        ->native(false)
+                        ->displayFormat('H:i')
                         ->seconds(false),
                     Forms\Components\Select::make('status')
                         ->label('Estado')
@@ -100,6 +118,7 @@ class AppointmentResource extends Resource
                     Forms\Components\TextInput::make('last_name')->label('Apellido')->required()->maxLength(60),
                     Forms\Components\TextInput::make('email')->label('Email')->email()->required()->maxLength(120),
                     Forms\Components\TextInput::make('phone')->label('Teléfono')->tel()->required()->maxLength(20),
+                    Forms\Components\TextInput::make('dni')->label('DNI')->required()->maxLength(20)->placeholder('Sin puntos ni guiones'),
                     Forms\Components\Select::make('health_insurance_id')
                         ->label('Obra social')
                         ->relationship('healthInsurance', 'name')
@@ -116,7 +135,9 @@ class AppointmentResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->defaultSort('date')
+            ->defaultSort('date', 'asc')
+            ->defaultPaginationPageOption(25)
+            ->paginationPageOptions([10, 25, 50, 100])
             ->defaultGroup(
                 Group::make('date')
                     ->label('Fecha')
@@ -145,6 +166,11 @@ class AppointmentResource extends Resource
                     ->label('Teléfono')
                     ->searchable()
                     ->copyable(),
+                Tables\Columns\TextColumn::make('dni')
+                    ->label('DNI')
+                    ->searchable()
+                    ->copyable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
                     ->searchable()
@@ -176,11 +202,11 @@ class AppointmentResource extends Resource
                         Forms\Components\DatePicker::make('until')->label('Hasta')->native(false)->displayFormat('d/m/Y'),
                     ])
                     ->query(fn (Builder $query, array $data) => $query
-                        ->when($data['from'], fn (Builder $q, $date) => $q->whereDate('date', '>=', $date))
-                        ->when($data['until'], fn (Builder $q, $date) => $q->whereDate('date', '<=', $date))),
+                        ->when($data['from'], fn (Builder $q, $date) => $q->where('date', '>=', $date))
+                        ->when($data['until'], fn (Builder $q, $date) => $q->where('date', '<=', $date))),
                 Tables\Filters\Filter::make('upcoming')
                     ->label('Sólo próximos')
-                    ->query(fn (Builder $query) => $query->whereDate('date', '>=', today()))
+                    ->query(fn (Builder $query) => $query->where('date', '>=', today()->toDateString()))
                     ->default(),
             ])
             ->actions([

@@ -26,7 +26,7 @@
           @foreach ($doctor->specialties as $specialty)
             <div class="filter-btn is-static">
               @if ($specialty->icon)
-                <div class="filter-ico"><img src="{{ asset($specialty->icon) }}" alt="" /></div>
+                <div class="filter-ico"><img src="{{ Storage::url($specialty->icon) }}" alt="" /></div>
               @endif
               <span>{{ $specialty->name }}</span>
             </div>
@@ -40,14 +40,18 @@
         <div class="booking-card">
           <div class="row g-5 align-items-start">
             <div class="col-12 col-sm-auto text-center text-sm-start">
-              <img class="doc-photo" src="{{ $doctor->photo ? asset($doctor->photo) : asset('assets/images/logo_300.png') }}" alt="{{ $doctor->full_name }}" />
+              <img class="doc-photo" src="{{ $doctor->photo ? Storage::url($doctor->photo) : asset('assets/images/logo_300.png') }}" alt="{{ $doctor->full_name }}" />
             </div>
             <div class="col">
               <h2>{{ $doctor->full_name }}</h2>
               @if ($doctor->license)
                 <div class="doc-mn">{{ $doctor->license }}</div>
               @endif
-              <p class="doc-role">{{ $doctor->headline }}</p>
+              <p class="doc-role">{{ $doctor->headline ?: $doctor->specialties->pluck('name')->join(' · ') }}</p>
+
+              @if ($doctor->bio)
+                <div class="doc-bio mb-3">{!! nl2br(e($doctor->bio)) !!}</div>
+              @endif
 
               <div class="d-flex flex-wrap gap-3 doc-hours">
                 @foreach ($doctor->schedules as $schedule)

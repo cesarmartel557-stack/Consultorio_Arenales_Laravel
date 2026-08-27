@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\UserRole;
+use App\Filament\Pages\MiPerfil;
 use App\Filament\Resources\AppointmentResource;
 use App\Filament\Resources\AppointmentResource\Pages\ListAppointments;
+use App\Filament\Resources\DoctorResource;
 use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
@@ -49,7 +51,7 @@ class AdminPanelTest extends TestCase
 
     public function test_el_panel_requiere_login(): void
     {
-        $this->get('/admin')->assertRedirect();
+        $this->get('/gestion')->assertRedirect();
     }
 
     public function test_el_admin_ve_los_turnos_de_todos_los_medicos(): void
@@ -114,7 +116,7 @@ class AdminPanelTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::Doctor]);
 
         $this->actingAs($user)
-            ->get(\App\Filament\Resources\DoctorResource::getUrl('index'))
+            ->get(DoctorResource::getUrl('index'))
             ->assertForbidden();
     }
 
@@ -127,5 +129,28 @@ class AdminPanelTest extends TestCase
         $this->makeAppointment($this->makeDoctor('dos'), '10:00');
 
         $this->assertSame('2', AppointmentResource::getNavigationBadge());
+    }
+
+    public function test_el_medico_puede_editar_su_matricula_en_mi_perfil(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::Doctor]);
+        $doctor = $this->makeDoctor('perfil', $user);
+
+        Livewire::actingAs($user)
+            ->test(MiPerfil::class)
+            ->fillForm([
+                'title' => 'Dra.',
+                'license' => 'MN 105432',
+                'headline' => 'Especialista en Pediatría',
+                'bio' => "Atención virtual\nConsultas por WhatsApp",
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $fresh = $doctor->fresh();
+        $this->assertSame('Dra.', $fresh->title);
+        $this->assertSame('MN 105432', $fresh->license);
+        $this->assertSame('Especialista en Pediatría', $fresh->headline);
+        $this->assertSame("Atención virtual\nConsultas por WhatsApp", $fresh->bio);
     }
 }

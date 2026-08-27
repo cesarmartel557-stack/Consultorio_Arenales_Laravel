@@ -1,20 +1,22 @@
 <x-mail::message>
-# Te recordamos tu turno
+# Recordatorio de tu turno
 
-Hola {{ $appointment->first_name }}, mañana tenés turno en el consultorio.
+Hola **{{ $appointment->first_name }}**, te recordamos que mañana tenés tu consulta médica en el consultorio.
 
 <x-mail::panel>
-**Profesional:** {{ $doctor->full_name }}
-**Cuándo:** {{ $when }}
+**Profesional:** {{ $doctor->full_name }}  
+**Cuándo:** {{ $when }}  
 **Dónde:** Azcuénaga 1222, 5to piso — Palermo, CABA
 </x-mail::panel>
 
-Te pedimos llegar 10 minutos antes. Si no vas a poder asistir, avisanos:
+Te pedimos por favor llegar **10 minutos antes**.
 
 <x-mail::button :url="$manageUrl">
-Cancelar mi turno
+Ver o gestionar mi turno
 </x-mail::button>
 
-Nos vemos,<br>
-{{ config('app.name') }}
+Si no vas a poder asistir, por favor cancelalo con tiempo desde el enlace para reasignar el horario.
+
+Te esperamos,<br>
+**Consultorio Integral Arenales**
 </x-mail::message>

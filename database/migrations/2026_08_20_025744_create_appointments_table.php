@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -40,9 +39,13 @@ return new class extends Migration
             // Bloquea a nivel de base de datos que dos pacientes ocupen el mismo slot.
             // Queda NULL cuando el turno se cancela/rechaza, liberando el horario
             // (MySQL permite múltiples NULL en un índice único).
+            $storedExpression = DB::getDriverName() === 'sqlite'
+                ? "CASE WHEN status IN ('pending', 'confirmed') THEN (doctor_id || '|' || date || '|' || start_time) ELSE NULL END"
+                : "CASE WHEN status IN ('pending', 'confirmed') THEN CONCAT(doctor_id, '|', `date`, '|', start_time) ELSE NULL END";
+
             $table->string('active_slot', 64)
                 ->nullable()
-                ->storedAs("CASE WHEN status IN ('pending', 'confirmed') THEN CONCAT(doctor_id, '|', `date`, '|', start_time) ELSE NULL END");
+                ->storedAs($storedExpression);
 
             $table->index(['doctor_id', 'date']);
             $table->index('email');

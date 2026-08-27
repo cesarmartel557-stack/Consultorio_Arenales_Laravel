@@ -23,21 +23,21 @@
           <div class="col-lg-6 about-collage">
             <img
               class="main mb-3"
-              src="/assets/images/nosotros-img-1.webp"
+              src="{{ asset('assets/images/nosotros-img-1.webp') }}"
               alt=""
             />
             <div class="row g-3">
               <div class="col-6">
                 <img
                   class="thumb"
-                  src="/assets/images/nosotros-img-2.webp"
+                  src="{{ asset('assets/images/nosotros-img-2.webp') }}"
                   alt=""
                 />
               </div>
               <div class="col-6">
                 <img
                   class="thumb"
-                   src="/assets/images/nosotros-img-3.webp"
+                   src="{{ asset('assets/images/nosotros-img-3.webp') }}"
                    alt=""
                 />
               </div>
@@ -64,38 +64,14 @@
     <section class="section-muted py-5">
       <div class="container">
         <div class="row g-3 justify-content-center">
+          @foreach ($specialties as $specialty)
           <div class="col-6 col-md-4 col-lg-2">
             <div class="esp-card">
-              <div class="esp-icon"><img src="/assets/images/icon-gineco.webp" alt="Ginecología" /></div>
-              <h4>Ginecología</h4>
+              <div class="esp-icon"><img src="{{ $specialty->icon ? Storage::url($specialty->icon) : asset('assets/images/logo_300.png') }}" alt="{{ $specialty->name }}" /></div>
+              <h4>{{ $specialty->name }}</h4>
             </div>
           </div>
-          <div class="col-6 col-md-4 col-lg-2">
-            <div class="esp-card">
-              <div class="esp-icon"><img src="/assets/images/icon-obstetricia.webp" alt="Obstetricia" /></div>
-              <h4>Obstetricia</h4>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-2">
-            <div class="esp-card">
-              <div class="esp-icon"><img src="/assets/images/icon-fertilidad.webp" alt="Fertilidad" /></div>
-              <h4>Fertilidad</h4>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-2">
-            <div class="esp-card">
-              <div class="esp-icon"><img src="/assets/images/icon-mastologia.webp" alt="Mastología" /></div>
-              <h4>Mastología</h4>
-            </div>
-          </div>
-          <!--
-          <div class="col-6 col-md-4 col-lg-2">
-            <div class="esp-card">
-              <div class="esp-icon"><img src="/assets/images/icon-nutricion.webp" alt="Nutrición" /></div>
-              <h4>Nutrición</h4>
-            </div>
-          </div>
-          -->
+          @endforeach
           
         </div>
       </div>
@@ -119,7 +95,7 @@
           </div>
           <div class="col-lg-7">
             <img
-              src="/assets/images/midsection-doctors-with-arms-crossed.webp"
+              src="{{ asset('assets/images/midsection-doctors-with-arms-crossed.webp') }}"
               alt="Equipo"
             />
           </div>
@@ -132,7 +108,7 @@
       <div class="container">
         <div class="cta-band p-4 p-md-4">
           <div class="row align-items-center g-3">
-            <div class="col-auto"><div class="agenda-icon"><img class="" src="/assets/images/agenda-icon.webp" alt="" /></div></div>
+            <div class="col-auto"><div class="agenda-icon"><img class="" src="{{ asset('assets/images/agenda-icon.webp') }}" alt="" /></div></div>
             <div class="col">
               <h3 class="mb-1">Agenda tu turno de forma rápida y sencilla.</h3>
               <p>Elegí el profesional, la fecha y el horario que mejor se adapten a vos.</p>
