@@ -238,10 +238,13 @@ class BookingWizard extends Component
 
     public function render()
     {
-        return view('livewire.booking-wizard')
-            ->layout('layouts.public', [
-                'title' => 'Turnos | Consultorio Integral Arenales',
-            ]);
+        $calendar = app(AvailabilityService::class)->calendar($this->doctor, 8);
+
+        return view('livewire.booking-wizard', [
+            'calendar' => $calendar,
+        ])->layout('layouts.public', [
+            'title' => 'Turnos | Consultorio Integral Arenales',
+        ]);
     }
 
     private function weekStart(): Carbon

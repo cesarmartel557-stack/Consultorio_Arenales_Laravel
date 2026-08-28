@@ -106,9 +106,20 @@ MAIL_FROM_NAME="Consultorio Integral Arenales"
 
 ---
 
-## 🗄️ 4. Base de Datos y Creación de Tablas
+## 🗄️ 4. Base de Datos, Creación de Tablas y Diagnóstico
 
-Si tenés acceso a terminal SSH o mediante el Administrador de Tareas de Ferozo:
+### Método A: Directo desde el Navegador (Recomendado sin SSH)
+1. Abrí en tu navegador: **`http://turnos.consultoriointegralarenales.com.ar/diagnostico.php`**
+2. Esta herramienta te mostrará el estado de la conexión a la base de datos, los permisos y las cachés.
+3. Hacé clic en:
+   - **`🧹 1. Limpiar Todas las Cachés`** (elimina cualquier caché anterior que cause 500).
+   - **`🗄️ 2. Crear Tablas en BD (Migrate & Seed)`** (crea automáticamente todas las tablas, especialidades, médicos, obras sociales y usuarios).
+   - **`🚀 4. Optimizar para Producción`** (pre-compila y acelera todo el sitio).
+4. Luego hacé clic en **`Ir a la Web`** para ingresar a la portada o **`Ir al Panel`** para entrar a `/gestion`.
+
+---
+
+### Método B: Vía Terminal SSH (Si disponés de acceso)
 
 ```bash
 cd /home/tu_usuario/laravel_app
@@ -129,8 +140,6 @@ php artisan storage:link
 php artisan optimize
 php artisan filament:optimize
 ```
-
-*(Si no tenés acceso a SSH, podés importar el archivo `.sql` inicial desde phpMyAdmin y ejecutar los comandos mediante un script temporal o tarea Cron).*
 
 ---
 

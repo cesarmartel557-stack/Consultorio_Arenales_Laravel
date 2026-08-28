@@ -1,7 +1,11 @@
+DirectoryIndex index.php index.html
+
 <IfModule mod_rewrite.c>
-    <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
-    </IfModule>
+    # En servidores como Ferozo/DonWeb/cPanel, si "Options" no está permitido causa Error 500.
+    # Descomentar solo si el hosting lo admite:
+    # <IfModule mod_negotiation.c>
+    #     Options -MultiViews -Indexes
+    # </IfModule>
 
     RewriteEngine On
 

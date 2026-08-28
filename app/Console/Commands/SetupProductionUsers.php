@@ -12,7 +12,7 @@ class SetupProductionUsers extends Command
      *
      * @var string
      */
-    protected $signature = 'app:setup-production-users';
+    protected $signature = 'app:setup-production-users {--force : Forzar la ejecución sin confirmación}';
 
     /**
      * The console command description.
